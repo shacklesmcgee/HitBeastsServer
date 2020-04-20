@@ -1,0 +1,109 @@
+https://kvnbmo377d.execute-api.us-east-1.amazonaws.com/default/HitBeasts_UpdatePlayerValues
+
+import json
+import boto3
+import decimal
+
+from boto3.dynamodb.conditions import Key, Attr
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return float(o)
+        return super(DecimalEncoder, self).default(o)
+        
+def lambda_handler(event, context):
+    
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('HitBeasts')
+    
+    if (event['httpMethod'] == 'PUT'):
+        
+        
+        user_id = json.loads(event['body'])['user_id']
+        game_id = json.loads(event['body'])['game_id']
+        attackLvl = json.loads(event['body'])['attackLvl']
+        defenceLvl = json.loads(event['body'])['defenceLvl']
+        healthLvl = json.loads(event['body'])['healthLvl']
+        luckLvl = json.loads(event['body'])['luckLvl']
+        skillPoints = json.loads(event['body'])['skillPoints']
+        specialLvl = json.loads(event['body'])['specialLvl']
+        
+        
+        response = table.query(
+            KeyConditionExpression=Key('user_id').eq(user_id)
+        )
+
+        if (response['Count'] == 0 ):
+            data = "User not found!"
+        
+        else:
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression= 'SET game_id = :val1',
+                ExpressionAttributeValues={
+                    ':val1': game_id
+                }
+            )
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression= 'SET attackLvl = :val1',
+                ExpressionAttributeValues={
+                    ':val1': attackLvl
+                }
+            )
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression= 'SET defenceLvl = :val1',
+                ExpressionAttributeValues={
+                    ':val1': defenceLvl
+                }
+            )
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression= 'SET healthLvl = :val1',
+                ExpressionAttributeValues={
+                    ':val1': healthLvl
+                }
+            )
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression= 'SET luckLvl = :val1',
+                ExpressionAttributeValues={
+                    ':val1': luckLvl
+                }
+            )
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression= 'SET skillPoints = :val1',
+                ExpressionAttributeValues={
+                    ':val1': skillPoints
+                }
+            )
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression= 'SET specialLvl = :val1',
+                ExpressionAttributeValues={
+                    ':val1': specialLvl
+                }
+            )
+            
+            data = "Updated Database"
+        return {
+            'statusCode': 200,
+            'body': json.dumps(data, cls=DecimalEncoder)
+        }
