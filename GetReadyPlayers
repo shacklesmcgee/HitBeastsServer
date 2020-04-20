@@ -1,0 +1,31 @@
+https://7sry1cuefi.execute-api.us-east-1.amazonaws.com/default/GetReadyPlayers
+
+import json
+import boto3
+import decimal
+
+from boto3.dynamodb.conditions import Key, Attr
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return float(o)
+        return super(DecimalEncoder, self).default(o)
+        
+def lambda_handler(event, context):
+    
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('HitBeasts')
+    
+    if (event['httpMethod'] == 'GET'):
+        
+        response = table.scan(
+            FilterExpression=Attr('game_id').eq("none") & Attr('loggedIn').eq(True)
+        )
+        
+        data = response['Items']
+                
+        return {
+            'statusCode': 200,
+            'body': json.dumps(data, cls=DecimalEncoder)
+        }
