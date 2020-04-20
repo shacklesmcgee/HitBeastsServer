@@ -1,0 +1,47 @@
+https://abs2mx8h0g.execute-api.us-east-1.amazonaws.com/default/HitBeasts_SetGame_Ids
+
+import json
+import boto3
+import decimal
+
+from boto3.dynamodb.conditions import Key, Attr
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return float(o)
+        return super(DecimalEncoder, self).default(o)
+        
+def lambda_handler(event, context):
+    
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('HitBeasts')
+    
+    if (event['httpMethod'] == 'PUT'):
+        
+        user_id = json.loads(event['body'])['user_id']
+        game_id = json.loads(event['body'])['game_id']
+        
+        response = table.query(
+            KeyConditionExpression=Key('user_id').eq(user_id)
+        )
+
+        if (response['Count'] == 0 ):
+            data = "User not found!"
+        
+        else:
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression= 'SET game_id = :val1',
+                ExpressionAttributeValues={
+                    ':val1': game_id
+                }
+            )
+            data = "Updated Game_id: '" + str(game_id) + "' in user: '" + str(user_id)
+            
+        return {
+            'statusCode': 200,
+            'body': json.dumps(data, cls=DecimalEncoder)
+        }
