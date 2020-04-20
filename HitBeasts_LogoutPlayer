@@ -1,0 +1,57 @@
+https://61wg5gfqnh.execute-api.us-east-1.amazonaws.com/default/HitBeasts_LogoutPlayer
+
+import json
+import boto3
+import decimal
+
+from boto3.dynamodb.conditions import Key, Attr
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return float(o)
+        return super(DecimalEncoder, self).default(o)
+        
+def lambda_handler(event, context):
+    
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('HitBeasts')
+    
+    if (event['httpMethod'] == 'PUT'):
+        
+        user_id = json.loads(event['body'])['user_id']
+        response = table.query(
+            KeyConditionExpression=Key('user_id').eq(user_id)
+        )
+        
+        data = "Error: Password doesn't match or User doesn't exist!"
+        
+        if (response['Count'] > 0):
+
+            item = response['Items']
+            data = item[0]
+            
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression='SET loggedIn = :val1',
+                ExpressionAttributeValues={
+                    ':val1': False
+                }
+            )
+            
+            table.update_item(
+                Key={
+                    'user_id': user_id
+                },
+                UpdateExpression='SET game_id = :val1',
+                ExpressionAttributeValues={
+                    ':val1': 'none'
+                }
+            )
+            
+        return {
+            'statusCode': 200,
+            'body': json.dumps(data, cls=DecimalEncoder)
+        }
